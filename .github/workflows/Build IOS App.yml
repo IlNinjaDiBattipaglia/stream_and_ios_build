@@ -5,7 +5,7 @@ on:
       branches: [ "main", "master", "stream-main" ]
     pull_request:
       branches: [ "main", "master", "stream-main" ]
-    workflow_dispatch: # Ti consente di avviarlo manualmente o dopo la sincronizzazione del fork
+    workflow_dispatch:
 
 jobs:
     build:
@@ -20,7 +20,6 @@ jobs:
 
         - name: Build iOS Project
           run: |
-            # Cerca il file .xcodeproj partendo dalla root del repository
             PROJECT_PATH=$(find . -name "*.xcodeproj" | head -n 1)
 
             if [ -n "$PROJECT_PATH" ]; then
@@ -28,10 +27,8 @@ jobs:
                 PROJECT_DIR=$(dirname "$PROJECT_PATH")
                 echo "Trovato il progetto in: $PROJECT_DIR (Scheme: $PROJECT_NAME)"
 
-                # Entra nella cartella corretta trovata dal comando find
                 cd "$PROJECT_DIR"
 
-                # Compilazione per simulatore iOS disabilitando la firma obbligatoria
                 xcodebuild clean build \
                     -project "$(basename "$PROJECT_PATH")" \
                     -scheme "$PROJECT_NAME" \
@@ -43,3 +40,9 @@ jobs:
                 echo "Errore: Nessun file .xcodeproj trovato nella repository."
                 exit 1
             fi
+
+        - name: Upload iOS App Artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: iOS-Simulator-App
+            path: '**/*.app'
