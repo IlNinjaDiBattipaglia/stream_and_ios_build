@@ -1,0 +1,36 @@
+name: Build iOS App
+on:
+push:
+branches: [ "main", "master", "stream-main" ]
+pull_request:
+branches: [ "main", "master", "stream-main" ]
+workflow_dispatch: # Ti consente di avviarlo manualmente o dopo la sincronizzazione del fork
+jobs:
+build:
+name: Build for iOS Simulator
+runs-on: macos-latest
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+- name: Select Xcode version
+run: sudo xcode-select -s /Applications/Xcode.app
+- name: Build iOS Project
+run: |
+cd ios/FamilyStream
+# Trova automaticamente il file .xcodeproj all'interno della cartella
+PROJECT_PATH=$(find . -maxdepth 2 -name "*.xcodeproj" | head -n 1)
+if [ -n "￼
+PROJECT_NAME=(basename "$PROJECT_PATH" .xcodeproj)
+echo "Trovato il progetto: $PROJECT_PATH (Scheme:$PROJECT_NAME)"
+# Compilazione per simulatore iOS disabilitando la firma obbligatoria
+xcodebuild clean build 
+-project "$PROJECT_PATH" 
+-scheme "$PROJECT_NAME" 
+-destination 'platform=iOS Simulator,name=iPhone 16' 
+CODE_SIGN_IDENTITY="" 
+CODE_SIGNING_REQUIRED=NO 
+CODE_SIGN_ENTITLEMENTS=""
+else
+echo "Errore: Nessun file .xcodeproj trovato nella cartella ios/FamilyStream/"
+exit 1
+fi
