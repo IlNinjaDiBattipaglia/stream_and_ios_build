@@ -1,48 +1,32 @@
 name: Build iOS App
 
 on:
-    push:
-      branches: [ "main", "master", "stream-main" ]
-    pull_request:
-      branches: [ "main", "master", "stream-main" ]
-    workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-    build:
-      name: Build for iOS Simulator
-      runs-on: macos-latest
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
+  build:
+    name: Build and Upload Simulator App
+    runs-on: macos-latest
 
-        - name: Select Xcode version
-          run: sudo xcode-select -s /Applications/Xcode.app
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-        - name: Build iOS Project
-          run: |
-            PROJECT_PATH=$(find . -name "*.xcodeproj" | head -n 1)
+      - name: Build iOS Simulator App
+        run: |
+          xcodebuild clean build \
+            -project ios/FamilyStream.xcodeproj \
+            -scheme FamilyStream \
+            -sdk iphonesimulator \
+            -derivedDataPath ./ios/build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
 
-            if [ -n "$PROJECT_PATH" ]; then
-                PROJECT_NAME=$(basename "$PROJECT_PATH" .xcodeproj)
-                PROJECT_DIR=$(dirname "$PROJECT_PATH")
-                echo "Trovato il progetto in: $PROJECT_DIR (Scheme: $PROJECT_NAME)"
-
-                cd "$PROJECT_DIR"
-
-                xcodebuild clean build \
-                    -project "$(basename "$PROJECT_PATH")" \
-                    -scheme "$PROJECT_NAME" \
-                    -destination 'platform=iOS Simulator,name=iPhone 17' \
-                    CODE_SIGN_IDENTITY="" \
-                    CODE_SIGNING_REQUIRED=NO \
-                    CODE_SIGN_ENTITLEMENTS=""
-            else
-                echo "Errore: Nessun file .xcodeproj trovato nella repository."
-                exit 1
-            fi
-
-        - name: Upload iOS App Artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: iOS-Simulator-App
-            path: '**/*.app'
+      - name: Upload iOS App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FamilyStream-Simulator
+          path: ios/build/Build/Products/Debug-iphonesimulator/FamilyStream.app
